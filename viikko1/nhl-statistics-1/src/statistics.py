@@ -1,6 +1,18 @@
+from enum import Enum
+
+class SortBy(Enum):
+    POINTS = 1
+    GOALS = 2
+    ASSISTS = 3
+
 def sort_by_points(player):
     return player.points
 
+def sort_by_goals(player):
+    return player.goals
+
+def sort_by_assists(player):
+    return player.assists
 
 class Statistics:
     def __init__(self, reader):
@@ -23,11 +35,20 @@ class Statistics:
 
         return list(players_of_team)
 
-    def top(self, how_many):
+    def top(self, how_many, criteria=SortBy.POINTS):
+
+        match criteria:
+            case SortBy.POINTS:
+                x = sort_by_points
+            case SortBy.GOALS:
+                x = sort_by_goals
+            case SortBy.ASSISTS:
+                x = sort_by_assists
+        
         sorted_players = sorted(
             self._players,
             reverse=True,
-            key=sort_by_points
+            key=x
         )
 
         result = []
