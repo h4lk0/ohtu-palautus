@@ -5,9 +5,6 @@ def main():
     url = "https://studies.cs.helsinki.fi/nhlstats/2021-22/players"
     response = requests.get(url).json()
 
-    print("JSON-muotoinen vastaus:")
-    print(response)
-
     players = []
 
     for player_dict in response:
@@ -25,8 +22,9 @@ def main():
         continue
 
     print("Oliot:")
+    players_sorted = sorted(players, key=lambda player: player.points, reverse=True)
 
-    for player in players:
+    for player in players_sorted:
         print(player)
 
 if __name__ == "__main__":
