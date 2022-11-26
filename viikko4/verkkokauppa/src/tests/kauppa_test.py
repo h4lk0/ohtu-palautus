@@ -35,48 +35,59 @@ class TestKauppa(unittest.TestCase):
         self.varasto_mock.saldo.side_effect = varasto_saldo
         self.varasto_mock.hae_tuote.side_effect = varasto_hae_tuote
 
+        self.kauppa = Kauppa(self.varasto_mock, self.pankki_mock, self.viitegeneraattori_mock)
+
     def test_ostoksen_paatyttya_pankin_metodia_tilisiirto_kutsutaan(self):
 
-        # alustetaan kauppa
-        kauppa = Kauppa(self.varasto_mock, self.pankki_mock, self.viitegeneraattori_mock)
-
         # tehdään ostokset
-        kauppa.aloita_asiointi()
-        kauppa.lisaa_koriin(1)
-        kauppa.tilimaksu("pekka", "12345")
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.tilimaksu("pekka", "12345")
 
         # varmistetaan, että metodia tilisiirto on kutsuttu
         self.pankki_mock.tilisiirto.assert_called()
         # toistaiseksi ei välitetä kutsuun liittyvistä argumenteista
 
     def test_osto_kutsuu_pankin_tilisiirtoa_oikeilla_arvoilla(self):
+
+        self.viitegeneraattori_mock.uusi.return_value = 67
         
-        kauppa = Kauppa(self.varasto_mock, self.pankki_mock, self.viitegeneraattori_mock)
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.tilimaksu("jussi", "67890")
 
-        kauppa.aloita_asiointi()
-        kauppa.lisaa_koriin(1)
-        kauppa.tilimaksu("jussi", "67890")
-
-        self.pankki_mock.tilisiirto.assert_called_with("jussi", ANY, "67890", ANY, 5)
+        self.pankki_mock.tilisiirto.assert_called_with("jussi", 67, "67890", "33333-44455", 5)
 
     def test_kahden_ostoksen_summa_on_oikein(self):
 
-        kauppa = Kauppa(self.varasto_mock, self.pankki_mock, self.viitegeneraattori_mock)
+        self.viitegeneraattori_mock.uusi.return_value = 19
 
-        kauppa.aloita_asiointi()
-        kauppa.lisaa_koriin(1)
-        kauppa.lisaa_koriin(2)
-        kauppa.tilimaksu("maija", "23456")
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.lisaa_koriin(2)
+        self.kauppa.tilimaksu("maija", "23456")
 
-        self.pankki_mock.tilisiirto.assert_called_with("maija", ANY, "23456", ANY, 9)
+        self.pankki_mock.tilisiirto.assert_called_with("maija", 19, "23456", "33333-44455", 9)
 
     def test_loppunutta_tuotetta_ei_veloiteta(self):
 
-        kauppa = Kauppa(self.varasto_mock, self.pankki_mock, self.viitegeneraattori_mock)
+        self.viitegeneraattori_mock.uusi.return_value = 98
 
-        kauppa.aloita_asiointi()
-        kauppa.lisaa_koriin(2)
-        kauppa.lisaa_koriin(3)
-        kauppa.tilimaksu("paavo", "56789")
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(2)
+        self.kauppa.lisaa_koriin(3)
+        self.kauppa.tilimaksu("paavo", "56789")
 
-        self.pankki_mock.tilisiirto.assert_called_with("paavo", ANY, "56789", ANY, 4)
+        self.pankki_mock.tilisiirto.assert_called_with("paavo", 98, "56789", "33333-44455", 4)
+
+    def test_tuotteen_poisto_toimii(self):
+
+        self.viitegeneraattori_mock.uusi.return_value = 35
+
+        self.kauppa.aloita_asiointi()
+        self.kauppa.lisaa_koriin(1)
+        self.kauppa.lisaa_koriin(2)
+        self.kauppa.poista_korista(1)
+        self.kauppa.tilimaksu("veijo", "23567")
+
+        self.pankki_mock.tilisiirto.assert_called_with("veijo", 35, "23567", "33333-44455", 4)
