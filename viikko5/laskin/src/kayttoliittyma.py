@@ -10,10 +10,17 @@ class Komento(Enum):
 
 
 class Kayttoliittyma:
-    def __init__(self, sovellus, root):
-        self._sovellus = sovellus
+    def __init__(self, sovelluslogiikka, root):
+        self._sovellus = sovelluslogiikka
         self._root = root
 
+        self._komennot = {
+            Komento.SUMMA: Summa(self._sovellus, self._lue_syote),
+            Komento.EROTUS: Erotus(self._sovellus, self._lue_syote),
+            Komento.NOLLAUS: Nollaus(self._sovellus, self._lue_syote),
+            Komento.KUMOA: Kumoa(self._sovellus, self._lue_syote)
+        }
+    
     def kaynnista(self):
         self._tulos_var = StringVar()
         self._tulos_var.set(self._sovellus.tulos)
@@ -55,21 +62,8 @@ class Kayttoliittyma:
         self._kumoa_painike.grid(row=2, column=3)
 
     def _suorita_komento(self, komento):
-        arvo = 0
-
-        try:
-            arvo = int(self._syote_kentta.get())
-        except Exception:
-            pass
-
-        if komento == Komento.SUMMA:
-            self._sovellus.plus(arvo)
-        elif komento == Komento.EROTUS:
-            self._sovellus.miinus(arvo)
-        elif komento == Komento.NOLLAUS:
-            self._sovellus.nollaa()
-        elif komento == Komento.KUMOA:
-            pass
+        komento_olio = self._komennot[komento]
+        komento_olio.suorita()
 
         self._kumoa_painike["state"] = constants.NORMAL
 
@@ -80,3 +74,40 @@ class Kayttoliittyma:
 
         self._syote_kentta.delete(0, constants.END)
         self._tulos_var.set(self._sovellus.tulos)
+
+    def _lue_syote(self):
+        return self._syote_kentta.get()
+
+class Summa:
+    def __init__(self, logiikka, funktio):
+        self.logiikka = logiikka
+        self.funktio = funktio
+
+    def suorita(self):
+        arvo = int(self.funktio())
+        self.logiikka.plus(arvo)
+
+class Erotus:
+    def __init__(self, logiikka, funktio):
+        self._logiikka = logiikka
+        self.funktio = funktio
+
+    def suorita(self):
+        arvo = int(self.funktio())
+        self._logiikka.miinus(arvo)
+
+class Nollaus:
+    def __init__(self, logiikka, funktio):
+        self._logiikka = logiikka
+        self.funktio = funktio
+
+    def suorita(self):
+        self._logiikka.nollaa()
+
+class Kumoa:
+    def __init__(self, logiikka, funktio):
+        self._logiikka = logiikka
+        self.funktio = funktio
+
+    def suorita(self):
+        pass
