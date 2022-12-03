@@ -13,13 +13,17 @@ class Kayttoliittyma:
     def __init__(self, sovelluslogiikka, root):
         self._sovellus = sovelluslogiikka
         self._root = root
+        self.edelliset = []
 
         self._komennot = {
             Komento.SUMMA: Summa(self._sovellus, self._lue_syote),
             Komento.EROTUS: Erotus(self._sovellus, self._lue_syote),
-            Komento.NOLLAUS: Nollaus(self._sovellus, self._lue_syote),
-            Komento.KUMOA: Kumoa(self._sovellus, self._lue_syote)
+            Komento.NOLLAUS: Nollaus(self._sovellus),
+            Komento.KUMOA: Kumoa(self._sovellus, self._hae_edelliset)
         }
+
+    def _hae_edelliset(self):
+        return self.edelliset
     
     def kaynnista(self):
         self._tulos_var = StringVar()
@@ -64,6 +68,7 @@ class Kayttoliittyma:
     def _suorita_komento(self, komento):
         komento_olio = self._komennot[komento]
         komento_olio.suorita()
+        self.edelliset.append(komento_olio)
 
         self._kumoa_painike["state"] = constants.NORMAL
 
@@ -80,34 +85,52 @@ class Kayttoliittyma:
 
 class Summa:
     def __init__(self, logiikka, funktio):
-        self.logiikka = logiikka
+        self._logiikka = logiikka
         self.funktio = funktio
+        self.alkuarvo = 0
 
     def suorita(self):
         arvo = int(self.funktio())
-        self.logiikka.plus(arvo)
+        self.alkuarvo = self._logiikka.tulos
+        self._logiikka.plus(arvo)
+
+    def kumoa(self):
+        self._logiikka.aseta_arvo(self.alkuarvo)
 
 class Erotus:
     def __init__(self, logiikka, funktio):
         self._logiikka = logiikka
         self.funktio = funktio
+        self.alkuarvo = 0
 
     def suorita(self):
         arvo = int(self.funktio())
+        self.alkuarvo = self._logiikka.tulos
         self._logiikka.miinus(arvo)
+    
+    def kumoa(self):
+        self._logiikka.aseta_arvo(self.alkuarvo)
 
 class Nollaus:
-    def __init__(self, logiikka, funktio):
+    def __init__(self, logiikka):
         self._logiikka = logiikka
-        self.funktio = funktio
+        self.alkuarvo = 0
 
     def suorita(self):
+        self.alkuarvo = self._logiikka.tulos
         self._logiikka.nollaa()
 
+    def kumoa(self):
+        self._logiikka.aseta_arvo(self.alkuarvo)
+
 class Kumoa:
-    def __init__(self, logiikka, funktio):
+    def __init__(self, logiikka, historia):
         self._logiikka = logiikka
-        self.funktio = funktio
+        self.historia = historia
 
     def suorita(self):
+        edelliset = self.historia()
+        edelliset[-1].kumoa()
+
+    def kumoa(self):
         pass
